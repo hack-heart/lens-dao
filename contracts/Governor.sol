@@ -4,28 +4,30 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorSettingsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorCountingSimpleUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesQuorumFractionUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "./interfaces/IFollowNFT.sol";
 
-contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgradeable, GovernorCountingSimpleUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable, GovernorTimelockControlUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+abstract contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgradeable, GovernorCountingSimpleUpgradeable, GovernorTimelockControlUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+  IFollowNFT public token;
+  
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() initializer {}
 
-  function initialize(IVotesUpgradeable _token, TimelockControllerUpgradeable _timelock)
+  function initialize(IFollowNFT _token, TimelockControllerUpgradeable _timelock)
     initializer public
   {
+    // TODO: Edit this to programmatically generate the name instead of governor
     __Governor_init("Governor");
     __GovernorSettings_init(1 /* 1 block */, 45818 /* 1 week */, 0);
     __GovernorCountingSimple_init();
-    __GovernorVotes_init(_token);
-    __GovernorVotesQuorumFraction_init(4);
     __GovernorTimelockControl_init(_timelock);
     __Ownable_init();
     __UUPSUpgradeable_init();
+
+    token = _token;
   }
 
   function _authorizeUpgrade(address newImplementation)
@@ -54,22 +56,13 @@ contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgrade
     return super.votingPeriod();
   }
 
-  function quorum(uint256 blockNumber)
-    public
-    view
-    override(IGovernorUpgradeable, GovernorVotesQuorumFractionUpgradeable)
-    returns (uint256)
-  {
-    return super.quorum(blockNumber);
-  }
-
   function getVotes(address account, uint256 blockNumber)
     public
     view
-    override(IGovernorUpgradeable, GovernorVotesUpgradeable)
+    override(IGovernorUpgradeable)
     returns (uint256)
   {
-    return super.getVotes(account, blockNumber);
+    return token.getPowerByBlockNumber(account, blockNumber);
   }
 
   function state(uint256 proposalId)

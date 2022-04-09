@@ -4,12 +4,15 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "./Governor.sol";
 import "./TimelockControl.sol";
+import "./interfaces/ILensHub.sol";
+import "./interfaces/IFollowNFT.sol";
 
 contract GovernorFactory {
+  address constant LENS_HUB_PROXY = 0x4BF0c7AD32Fd2d32089790a54485e23f5C7736C0;
   address public governor;
   address public timelockControl;
 
-  event GovernorCreated(address followNFT, address governorAddress, address timelockAddress);
+  event GovernorCreated(IFollowNFT followNFT, address governorAddress, address timelockAddress);
 
   constructor(address _governor, address _timelockControl) {
     require(_governor != address(0), "Governor not defined");
@@ -18,12 +21,18 @@ contract GovernorFactory {
   }
 
   function createGovernor(
-    address _followNFT,
+    uint256 profileId,
     uint256 minDelay,
     address[] memory proposers,
     address[] memory executors
   ) public {
-    // TODO: NFT or wrapper?
+
+    ILensHub LensHub = ILensHub(LENS_HUB_PROXY);
+    address followNFTAddress = LensHub.getFollowNFT(profileId);
+    require(followNFTAddress != address(0), "No existing FollowNFT");
+
+    IFollowNFT followNFT = IFollowNFT(followNFTAddress);
+
     address payable newGovernorAddress = payable(ClonesUpgradeable.clone(governor));
     address payable newTimeLockControlAddress = payable(ClonesUpgradeable.clone(timelockControl));
 
@@ -31,10 +40,9 @@ contract GovernorFactory {
     newTimelockControl.initialize(minDelay, proposers, executors);
 
     Governor newGovernor = Governor(newGovernorAddress);
-    newGovernor.initialize(_followNFT, newTimelockControl);
+    newGovernor.initialize(followNFT, newTimelockControl);
 
-    emit GovernorCreated(_followNFT, newGovernorAddress, newTimeLockControlAddress);
+    emit GovernorCreated(followNFT, newGovernorAddress, newTimeLockControlAddress);
   }
-
 
 }

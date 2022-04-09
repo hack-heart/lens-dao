@@ -5,6 +5,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 
 contract TimelockControl is Initializable, TimelockControllerUpgradeable {
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() initializer {}
 
   // minDelay is how long you have to wait before executing
   // proposers is the list of addresses that can propose
