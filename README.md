@@ -1,1 +1,1 @@
-# lens-dao
+# Lens DAO
