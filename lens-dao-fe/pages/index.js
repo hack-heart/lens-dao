@@ -1,0 +1,178 @@
+import Head from 'next/head'
+import styles from '../styles/Home.module.css'
+import { providers, BigNumber } from 'ethers'
+import { Provider, chain, defaultChains, useConnect, useAccount, useContractWrite, useContractEvent,
+  useContractRead, useNetwork, useSigner } from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
+import { WalletLinkConnector } from 'wagmi/connectors/walletLink'
+import GovernorFactoryContract from '../../artifacts/contracts/GovernorFactory.sol/GovernorFactory.json';
+import FollowNFTContract from '../../artifacts/contracts/interfaces/IFollowNFT.sol/IFollowNFT.json';
+const alchemyId = process.env.NEXT_PUBLIC_ALCHEMY_ID
+
+const provider = () => new providers.AlchemyProvider("matic", alchemyId)
+
+// Chains for connectors to support
+const chains = defaultChains
+
+// Set up connectors
+const connectors = ({ chainId }) => {
+  const rpcUrl =
+    chains.find((x) => x.id === chainId)?.rpcUrls?.[0] ??
+    chain.mainnet.rpcUrls[0]
+  return [
+    new InjectedConnector({
+      chains,
+      options: { shimDisconnect: true },
+    }),
+    new WalletConnectConnector({
+      options: {
+        rpc: {
+          80001: process.env.alchemyUrl
+        },
+        qrcode: true,
+      },
+    }),
+    new WalletLinkConnector({
+      options: {
+        appName: 'Lens Dao',
+        jsonRpcUrl: `${rpcUrl}/${alchemyId}`,
+      },
+    }),
+  ]
+}
+
+const Test = () => {
+  const [{ data, error }, connect] = useConnect()
+
+  const [{ data: accountData }, disconnect] = useAccount({
+    fetchEns: true,
+  })
+
+  const [{ data: contractData, error: contractError }, createDao] = useContractWrite(
+    {
+      addressOrName: '0x0ab976C7183343C5f3FA65fee057b444cf1Bb7d3',
+      contractInterface: GovernorFactoryContract.abi,
+    },
+    'createGovernor',
+    {
+      args: [0xe3, 2, [], []]
+    }
+  )
+
+  const [{data: delegateData, error: delegateError}, delegate] = useContractWrite({
+    addressOrName: '0x5DEa900bD89c94955f4122A5721F7b73ad08ed56',
+    contractInterface: FollowNFTContract.abi,
+  },
+  'delegate',
+  {
+    args: ['0xc0223A96Add07770503287c9a46594aB0229C8AB']
+  }
+  )
+
+  const [{ data: signerData, error: signerError }, getSigner] = useSigner()
+
+  const [{data: readData, error: readError}, read] = useContractRead({
+    addressOrName: '0x5DEa900bD89c94955f4122A5721F7b73ad08ed56',
+    contractInterface: FollowNFTContract.abi,
+  },
+    'getDelegatedSupplyByBlockNumber',
+    {
+      args: BigNumber.from(25864335)
+    }
+  )
+
+  const [{ data: networkdata, error: networkerror }, switchNetwork] = useNetwork()
+
+  const governorCreated = useContractEvent({
+    addressOrName: '0x0ab976C7183343C5f3FA65fee057b444cf1Bb7d3',
+    contractInterface: GovernorFactoryContract.abi
+  },
+  'GovernorCreated',
+  (event) => console.log(event),
+  )
+
+  const spin = async () => {
+    await createDao();
+
+    console.log(contractData)
+    console.log(contractError)
+  }
+
+  const tryDelegate = async () => {
+    await delegate();
+
+    console.log(delegateData);
+    console.log(delegateError)
+  }
+
+
+  // const tryReadPower = async () => {
+  //   console.log(networkdata)
+  //   await read();
+  //   console.log('read data')
+  //   console.log(readData);
+  //   console.log('signer data')
+  //   console.log(signerData)
+  //   console.log('read error:')
+  //   console.log(readError)
+  //   console.log('signer error:')
+  //   console.log(signerError)
+  // }
+
+  const divStyle = { margin: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }
+  const btnStyle = { padding: '10px', margin: '10px', color: '#ff00ff', fontSize: '20px', maxWidth: '200px'}
+
+  if (accountData) {
+    return (
+      <div style={divStyle}>
+        <div>
+          {accountData.ens?.name
+            ? `${accountData.ens?.name} (${accountData.address})`
+            : accountData.address}
+        </div>
+        <div>Connected to {accountData.connector.name}</div>
+        <button style={btnStyle} onClick={disconnect}>Disconnect</button>
+
+        <button style={btnStyle} onClick={spin}>Create DAO for Alis</button>
+        <button style={btnStyle} onClick={tryDelegate}>DELEGATE</button>
+        {/* <button onClick={tryReadPower}>READ POWER</button> */}
+      </div>
+    )
+  }
+
+  return (
+    <div style={divStyle}>
+      {data.connectors.map((connector) => (
+        <button
+          style={btnStyle}
+          key={connector.id}
+          onClick={() => connect(connector)}
+        >
+          {connector.name}
+          {!connector.ready && ' (unsupported)'}
+        </button>
+      ))}
+
+      {error && <div>{error?.message ?? 'Failed to connect'}</div>}
+    </div>
+  )
+}
+
+const Home = () => {
+  return (
+    <Provider autoConnect connectors={connectors} provider={provider}>
+      <div className={styles.container}>
+      <Head>
+        <title>Create Next App</title>
+        <meta name="description" content="Generated by create next app" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <Test></Test>
+    </div>
+    </Provider>
+  )
+}
+
+export default Home;
