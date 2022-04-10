@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-
+// Copy of library from Lens Protocol
 pragma solidity 0.8.13;
 
 /**

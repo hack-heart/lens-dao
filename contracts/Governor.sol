@@ -10,16 +10,24 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./interfaces/IFollowNFT.sol";
 
-contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgradeable, GovernorCountingSimpleUpgradeable, GovernorTimelockControlUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract Governor is 
+  Initializable,
+  GovernorUpgradeable,
+  GovernorSettingsUpgradeable,
+  GovernorCountingSimpleUpgradeable,
+  GovernorTimelockControlUpgradeable,
+  OwnableUpgradeable,
+  UUPSUpgradeable {
+
   IFollowNFT public token;
-  
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() initializer {}
 
   function initialize(IFollowNFT _token, TimelockControllerUpgradeable _timelock)
     initializer public
   {
-    // TODO: Edit this to programmatically generate the name instead of governor
+    // TODO: Edit this to programmatically generate the name instead of governor (FE v1)
     __Governor_init("Governor");
     __GovernorSettings_init(1 /* 1 block */, 45818 /* 1 week */, 0);
     __GovernorCountingSimple_init();
@@ -37,7 +45,6 @@ contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgrade
   {}
 
   // The following functions are overrides required by Solidity.
-
   function votingDelay()
     public
     view
@@ -62,7 +69,7 @@ contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgrade
     override(IGovernorUpgradeable)
     returns (uint256)
   {
-    // TODO: constants and parameters for numerator and denominator
+    // TODO: constants and parameters for numerator and denominator (FE v1)
     uint256 numerator = 4;
     uint256 denominator = 100;
     return (token.getDelegatedSupplyByBlockNumber(blockNumber) * numerator) / denominator;
