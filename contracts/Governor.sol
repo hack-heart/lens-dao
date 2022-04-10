@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./interfaces/IFollowNFT.sol";
 
-abstract contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgradeable, GovernorCountingSimpleUpgradeable, GovernorTimelockControlUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract Governor is Initializable, GovernorUpgradeable, GovernorSettingsUpgradeable, GovernorCountingSimpleUpgradeable, GovernorTimelockControlUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
   IFollowNFT public token;
   
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -54,6 +54,18 @@ abstract contract Governor is Initializable, GovernorUpgradeable, GovernorSettin
     returns (uint256)
   {
     return super.votingPeriod();
+  }
+
+  function quorum(uint256 blockNumber)
+    public
+    view
+    override(IGovernorUpgradeable)
+    returns (uint256)
+  {
+    // TODO: constants and parameters for numerator and denominator
+    uint256 numerator = 4;
+    uint256 denominator = 100;
+    return (token.getDelegatedSupplyByBlockNumber(blockNumber) * numerator) / denominator;
   }
 
   function getVotes(address account, uint256 blockNumber)
