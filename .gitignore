@@ -4,3 +4,7 @@ cache
 artifacts
 *.env.*
 .DS_Store
+lens-dao-fe/node_modules
+lens-dao-fe/.next
+lens-dao-fe/build
+lens-dao-fe/out
