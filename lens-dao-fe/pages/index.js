@@ -6,8 +6,8 @@ import { Provider, chain, defaultChains, useConnect, useAccount, useContractWrit
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { WalletLinkConnector } from 'wagmi/connectors/walletLink'
-import GovernorFactoryContract from '../../artifacts/contracts/GovernorFactory.sol/GovernorFactory.json';
-import FollowNFTContract from '../../artifacts/contracts/interfaces/IFollowNFT.sol/IFollowNFT.json';
+import GovernorFactoryContract from '../abis/GovernorFactory.json';
+import FollowNFTContract from '../abis/IFollowNFT.json';
 const alchemyId = process.env.NEXT_PUBLIC_ALCHEMY_ID
 
 const provider = () => new providers.AlchemyProvider("matic", alchemyId)
